@@ -126,8 +126,9 @@ if [[ ! -z ${MYSQL_PORT} ]]
 then
   MYSQL_OPTS="${MYSQL_OPTS} -P${MYSQL_PORT}"
 fi
+MYSQL_OPTS="-u${MYSQL_USER} ${MYSQL_OPTS}"
 log 2 "Using MySQL options : ${MYSQL_OPTS}"
-MYSQL_OPTS="-u${MYSQL_USER} -p${MYSQL_PASS} ${MYSQL_OPTS}"
+MYSQL_OPTS="-p${MYSQL_PASS} ${MYSQL_OPTS}"
 
 # We'll also need some other pseudo-constants
 DSTAMP=`date +%Y-%m-%d`
@@ -175,6 +176,7 @@ do
 		do
 			log 2 "Dumping table ${TAB_NAME}"
 			mysqldump ${MYSQL_OPTS} ${DB_TARGET} ${TAB_NAME} > ${DSTAMP}.${TAB_NAME}.sql
+      gzip ${DSTAMP}.${TAB_NAME}.sql
 		done
 	fi
 done
@@ -188,7 +190,7 @@ log 1 "Cleaning up old backup files"
 DAILY_THRESHOLD=`date --date="${BACKUP_DRET} days ago" +"%F"`
 log 2 "Removing daily files prior to ${DAILY_THRESHOLD}"
 
-for DAILY_FILE in `find ${BACKUP_DIR} -name '????-??-??.*.sql' -print`
+for DAILY_FILE in `find ${BACKUP_DIR} -name '????-??-??.*.sql.gz' -print`
 do
 	# Extract the date from the filename
 	FILE_DATE=`basename ${DAILY_FILE} | cut -d. -f1`
@@ -235,7 +237,7 @@ if [[ ! -z ${BACKUP_WRET} ]]
 then
 	WEEKLY_THRESHOLD=`date --date="${BACKUP_WRET} weeks ago" +"%YW%W"`
 	log 2 "Removing weekly files prior to ${WEEKLY_THRESHOLD}"
-	for WEEKLY_FILE in `find ${BACKUP_DIR} -name '????W??.*.sql' -print`
+	for WEEKLY_FILE in `find ${BACKUP_DIR} -name '????W??.*.sql.gz' -print`
 	do
 		# Extract the date from the filename
 		FILE_DATE=`basename ${WEEKLY_FILE} | cut -d. -f1`
@@ -255,7 +257,7 @@ if [[ ! -z ${BACKUP_MRET} ]]
 then
 	MONTHLY_THRESHOLD=`date --date="${BACKUP_MRET} months ago" +"%Y-%m"`
 	log 2 "Removing monthly files prior to ${MONTHLY_THRESHOLD}"
-	for MONTHLY_FILE in `find ${BACKUP_DIR} -name '????-??.*.sql' -print`
+	for MONTHLY_FILE in `find ${BACKUP_DIR} -name '????-??.*.sql.gz' -print`
 	do
 		# Extract the date from the filename
 		FILE_DATE=`basename ${MONTHLY_FILE} | cut -d. -f1`
@@ -275,7 +277,7 @@ if [[ ! -z ${BACKUP_YRET} ]]
 then
 	YEARLY_THRESHOLD=`date --date="${BACKUP_YRET} years ago" +"%Y"`
 	log 2 "Removing yearly files prior to ${YEARLY_THRESHOLD}"
-	for YEARLY_FILE in `find ${BACKUP_DIR} -name '????.*.sql' -print`
+	for YEARLY_FILE in `find ${BACKUP_DIR} -name '????.*.sql.gz' -print`
 	do
 		# Extract the date from the filename
 		FILE_DATE=`basename ${YEARLY_FILE} | cut -d. -f1`
